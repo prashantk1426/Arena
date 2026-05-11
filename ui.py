@@ -138,9 +138,20 @@
 #         surf.blit(hint, (surf.get_width()//2 - hint.get_width()//2, 400))
 
 # ui.py
-# # ui.py
 import pygame
 import config as cfg
+
+def get_font(size, bold=False):
+    """Robust font loader with fallback."""
+    # Try preferred fonts
+    preferred = ['arial', 'segoe ui', 'roboto', 'helvetica', 'verdana']
+    for font_name in preferred:
+        try:
+            return pygame.font.SysFont(font_name, size, bold=bold)
+        except:
+            continue
+    # Fallback to default
+    return pygame.font.SysFont(None, size, bold=bold)
 
 class Button:
     def __init__(self, text, x, y, w, h, color, callback=None, font=None):
@@ -148,7 +159,7 @@ class Button:
         self.text = text
         self.base_color = color
         self.callback = callback
-        self.font = font or pygame.font.SysFont('arial', 32, bold=True)
+        self.font = font or get_font(32, bold=True)
         self.hover = False
         self.pressed = False
 

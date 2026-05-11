@@ -1,26 +1,35 @@
-
 # main.py
 import pygame
 import sys
+import asyncio
 import config as cfg
 from audio import AudioManager
 from graphics import Background, Particle, LobbyEffect
-from ui import Button, HUD, ModalInput
+from ui import Button, HUD, ModalInput, get_font
 from game_collector import ArenaGame
 from game_dodge import DodgeGame
 from game_reaction import ReactionGame
 from leaderboard import Leaderboard
 
-def main():
+async def main():
     pygame.init()
     pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
-    screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.FULLSCREEN | pygame.HWSURFACE)
+    
+    # Robust display initialization
+    try:
+        screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
+    except pygame.error:
+        # Fallback to windowed mode if fullscreen fails
+        print("Fullscreen initialization failed. Falling back to windowed mode.")
+        screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
+        
     pygame.display.set_caption("ARENA - Professional Arcade Suite")
     clock = pygame.time.Clock()
-
-    fL = pygame.font.SysFont('arial', 72, bold=True)
-    fM = pygame.font.SysFont('arial', 44, bold=True)
-    fS = pygame.font.SysFont('arial', 30)
+    
+    # Robust font loading
+    fL = get_font(72, bold=True)
+    fM = get_font(44, bold=True)
+    fS = get_font(30)
 
     audio = AudioManager()
     bg = Background(cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT)
@@ -202,9 +211,9 @@ def main():
                 name = e.get('name', 'Player')
                 score = e.get('score', 0)
                 
-                s = fS.render(f"{i+1}. {name} | {score} pts | {game} ({diff})", True, c)
-                # Increased vertical spacing from 50 to 55 pixels
-                screen.blit(s, (cfg.SCREEN_WIDTH//2 - s.get_width()//2, 150 + i*52))
+                s = fS.render(f"{i+1:2}. {name:<12} | {score:>6} pts | {game} ({diff})", True, c)
+                # Left aligned with padding inside the container
+                screen.blit(s, (cfg.SCREEN_WIDTH//2 - 300, 150 + i*52))
             
             # FIXED: Moved ESC hint DOWN and made it more visible
             esc_hint = fM.render("Press ESC to go back", True, cfg.ACCENT_GREEN)
@@ -213,8 +222,9 @@ def main():
         for p in particles[:]: p.update(dt); p.draw(screen)
         particles[:] = [p for p in particles if p.life > 0]
         pygame.display.flip()
+        await asyncio.sleep(0)
 
     pygame.quit()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
