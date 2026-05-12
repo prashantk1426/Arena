@@ -1,36 +1,29 @@
 # ARENA: Professional Arcade Suite
+**Submission: End-Term Programming Project**
 
-A 100% Python-based arcade collection built with Pygame-CE.
+This document provides the features, controls, and instructions for the Arena Standalone Executable.
 
-## Features
-- **3 Unique Games**: 
-  - **Collector**: Strategic movement and gem collection.
-  - **Dodge**: High-speed obstacle avoidance.
-  - **Reaction Rush**: Fast-paced color matching grid.
-- **Persistent Leaderboard**: Tracks high scores across sessions.
-- **Dynamic Graphics**: Procedural particle systems and neon aesthetics.
-- **Synthetic Audio**: Pure Python audio generation (no external assets).
+## 🌟 Key Features
+- **Standalone Package**: A fully self-contained `.exe` file that requires no Python installation.
+- **Pure Python Logic**: Built using 100% Python and Pygame-CE with procedural asset generation.
+- **3 Game Arcade Collection**:
+  - **Collector**: Strategic neon gem collection.
+  - **Neon Dodge**: Fast-paced obstacle avoidance.
+  - **Reaction Rush**: Color-match speed challenge.
+- **Persistent Leaderboard**: Cross-session high score tracking.
+- **Optimized 1080p**: High-resolution graphics with automatic display scaling.
 
-## Controls
-- **Mouse**: Full support for menus and game movement.
-- **Keyboard**: 
-  - **WASD / Arrows**: Move player.
-  - **ESC**: Go back / Pause.
-  - **ENTER**: Select / Confirm.
+## 🎮 Game Controls
+- **Primary Control (Mouse)**: The game is fully playable with the mouse for menu selection and in-game movement.
+- **Secondary Control (Keyboard)**:
+  - **Arrow Keys / WASD**: Movement for all games.
+  - **ENTER**: Select / Start Game.
+  - **ESC**: Pause Game / Back to Menu.
 
-## How to Run
-### Web Version
-1. Open [https://arena-psw7.onrender.com](https://arena-psw7.onrender.com)
-2. Click the screen to start.
+## 📂 Instructions to Run
+1.  **Locate the Executable**: Open the `dist` folder in the project directory.
+2.  **Launch**: Double-click the file named **`ArenaArcade.exe`**.
+3.  **No Dependencies Required**: You do not need to install Python, Pygame, or any other libraries to run this file. 
 
-### Standalone Executable (.exe)
-1. Go to the `dist/` folder.
-2. Double-click **ArenaArcade.exe**.
-*(No Python installation required)*
-
-## Developer Instructions (How to Build)
-### To Build Web:
-`python -m pygbag --build .`
-
-### To Build EXE:
-`python package_exe.py`
+---
+*Created by: [Prashant kumar / 2024SEPVUGP0005]*

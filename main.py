@@ -6,40 +6,29 @@ import config as cfg
 from leaderboard import Leaderboard
 
 async def main():
-    print("LOG: Script started")
-    print("LOG: Initializing pygame...")
     pygame.init()
     
-    print("LOG: Initializing mixer...")
     try:
         pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
-    except Exception as e:
-        print(f"Mixer init failed: {e}")
+    except Exception:
+        pass
     
-    print(f"Setting display mode to {cfg.SCREEN_WIDTH}x{cfg.SCREEN_HEIGHT}...")
     try:
         screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.SCALED | pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
     except pygame.error:
-        # Fallback to windowed SCALED if fullscreen fails
-        print("Fullscreen initialization failed. Falling back to windowed SCALED mode.")
         screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
         
     pygame.display.set_caption("ARENA - Professional Arcade Suite")
     pygame.mouse.set_visible(True)
     clock = pygame.time.Clock()
     
-    print("LOG: Loading UI and Audio modules...")
     from ui import Button, HUD, ModalInput, get_font
     from audio import AudioManager
-    from graphics import Background, Particle, LobbyEffect
-    
-    print("LOG: Loading Game modules...")
+    from graphics import Background, LobbyEffect
     from game_collector import ArenaGame
     from game_dodge import DodgeGame
     from game_reaction import ReactionGame
     
-    print("LOG: Initializing assets...")
-    # Robust font loading
     fL = get_font(72, bold=True)
     fM = get_font(44, bold=True)
     fS = get_font(30)
@@ -51,14 +40,11 @@ async def main():
     lb = Leaderboard()
     particles = []
 
-    print("LOG: Setting up game instances...")
     games = {
         'collector': ArenaGame(audio, hud, particles),
         'dodge': DodgeGame(audio, hud, particles),
         'reaction': ReactionGame(audio, hud, particles)
     }
-    print("LOG: Ready! Entering main loop.")
-    print("Ready! Starting main loop.")
 
     current_game = None
     game_name = ""
@@ -92,8 +78,9 @@ async def main():
         modal = None
 
     def prep_start(key, name):
-        nonlocal state, selected_game_key, modal
+        nonlocal state, selected_game_key, modal, game_name
         selected_game_key = key
+        game_name = name
         state = 'input_name'
         modal = ModalInput("ENTER PLAYER NAME:")
         audio.stop_music()
@@ -102,7 +89,7 @@ async def main():
         Button("COLLECTOR", cfg.SCREEN_WIDTH//2-180, 250, 360, 60, cfg.ACCENT_GREEN, lambda: prep_start('collector', 'COLLECTOR'), fM),
         Button("NEON DODGE", cfg.SCREEN_WIDTH//2-180, 330, 360, 60, cfg.ACCENT_ORANGE, lambda: prep_start('dodge', 'NEON DODGE'), fM),
         Button("REACTION RUSH", cfg.SCREEN_WIDTH//2-180, 410, 360, 60, cfg.ACCENT_PINK, lambda: prep_start('reaction', 'REACTION RUSH'), fM),
-        Button("LEADERBOARD", cfg.SCREEN_WIDTH//2-180, 490, 360, 60, cfg.ACCENT_YELLOW, lambda: set_state('leaderboard'), fM),
+        Button("LEADERBOARD", cfg.SCREEN_WIDTH//2-180, 490, 360, 60, cfg.ACCENT_YELLOW, lambda: [set_state('leaderboard')], fM),
         Button("QUIT", cfg.SCREEN_WIDTH//2-180, 570, 360, 60, cfg.ACCENT_RED, lambda: [pygame.quit(), sys.exit()], fM)
     ]
 
@@ -177,7 +164,7 @@ async def main():
         elif state == 'playing' and current_game:
             if not is_paused:
                 res = current_game.update(dt, pygame.key.get_pressed(), clicks)
-                final_score, lives = res[0], res[1]
+                final_score = res[0]
                 current_game.draw(screen)
                 if not current_game.running:
                     state = 'gameover'
@@ -194,59 +181,39 @@ async def main():
                     if pause_menu_btn.rect.collidepoint(c): go_back()
 
         elif state == 'gameover':
-            # Full dark overlay
             overlay = pygame.Surface(screen.get_size()); overlay.fill(cfg.BG_PRIMARY); overlay.set_alpha(240)
             screen.blit(overlay, (0,0))
-            
-            # FIXED: Made box TALLER to contain both buttons (height increased from 450 to 550)
             pygame.draw.rect(screen, (20, 25, 45), (cfg.SCREEN_WIDTH//2-250, 100, 500, 550), border_radius=15)
             pygame.draw.rect(screen, cfg.ACCENT_BLUE, (cfg.SCREEN_WIDTH//2-250, 100, 500, 550), 3, border_radius=15)
-            
-            # Adjusted vertical spacing
             screen.blit(fL.render("GAME OVER", True, cfg.ACCENT_RED), (cfg.SCREEN_WIDTH//2-180, 130))
             screen.blit(fM.render(f"Player: {player_name}", True, cfg.ACCENT_BLUE), (cfg.SCREEN_WIDTH//2-150, 220))
             screen.blit(fL.render(f"SCORE: {final_score}", True, cfg.ACCENT_YELLOW), (cfg.SCREEN_WIDTH//2-150, 290))
-            
-            # FIXED: Moved buttons DOWN and INSIDE the box
             pause_resume_btn.text = "PLAY AGAIN"
-            pause_resume_btn.rect.y = 470  # Moved down significantly
-            pause_menu_btn.rect.y = 550    # Moved down significantly
-            
+            pause_resume_btn.rect.y = 470
+            pause_menu_btn.rect.y = 550
             pause_resume_btn.update(pos, events); pause_resume_btn.draw(screen)
             pause_menu_btn.update(pos, events); pause_menu_btn.draw(screen)
-            
             for c in clicks:
                 if pause_resume_btn.rect.collidepoint(c): start_game(); is_paused=False
                 if pause_menu_btn.rect.collidepoint(c): go_back()
 
         elif state == 'leaderboard':
-            # Full background overlay
             overlay = pygame.Surface(screen.get_size()); overlay.fill(cfg.BG_PRIMARY); overlay.set_alpha(240)
             screen.blit(overlay, (0,0))
-            
-            # Draw container - made it taller
             pygame.draw.rect(screen, (20, 25, 45), (cfg.SCREEN_WIDTH//2-350, 60, 700, 650), border_radius=15)
             pygame.draw.rect(screen, cfg.ACCENT_YELLOW, (cfg.SCREEN_WIDTH//2-350, 60, 700, 650), 3, border_radius=15)
-            
             screen.blit(fL.render("LEADERBOARD", True, cfg.ACCENT_YELLOW), (cfg.SCREEN_WIDTH//2-180, 80))
-            
-            # FIXED: Reduced to top 10 entries and increased spacing
-            top = lb.scores[:10]  # Changed from 12 to 10
+            top = lb.scores[:10]
             for i, e in enumerate(top):
                 c = cfg.ACCENT_YELLOW if i==0 else cfg.ACCENT_BLUE if i<3 else cfg.TEXT_PRIMARY
                 diff = e.get('diff', 'N/A')
                 game = e.get('game', 'UNKNOWN')
                 name = e.get('name', 'Player')
                 score = e.get('score', 0)
-                
                 s = fS.render(f"{i+1:2}. {name:<12} | {score:>6} pts | {game} ({diff})", True, c)
-                # Left aligned with padding inside the container
                 screen.blit(s, (cfg.SCREEN_WIDTH//2 - 300, 150 + i*52))
-            
-            # FIXED: Moved ESC hint DOWN and made it more visible
             esc_hint = fM.render("Press ESC or Click to go back", True, cfg.ACCENT_GREEN)
             screen.blit(esc_hint, (cfg.SCREEN_WIDTH//2 - esc_hint.get_width()//2, 730))
-
             if clicks: go_back()
 
         for p in particles[:]: p.update(dt); p.draw(screen)
