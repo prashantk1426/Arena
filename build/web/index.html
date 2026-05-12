@@ -1,121 +1,60 @@
-<script src="https://pygame-web.github.io/archives/0.9/browserfs.min.js"></script>
-<html lang="en-us"><script src="https://pygame-web.github.io/archives/0.9/pythons.js" type=module id="site" data-python="python3.12" data-LINES=42 data-COLUMNS=132 data-os="vtx,snd,gui">#<!--
+<html lang="en-us"><script src="https://pygame-web.github.io/archives/0.9/pythons.js" type=module id="site" data-python="python3.12" data-os="vtx,snd,gui" async defer>#<!--
 
-print("LOG: Python script starting...")
-
-import sys
 import asyncio
 import platform
-import json
 from pathlib import Path
 
-async def custom_site():
-    import embed
-    print("LOG: Custom site initialization...")
-    platform.document.body.style.background = "#222222"
-
+async def main():
+    print("LOG: Starting filesystem initialization")
     bundle = "hackathon_1"
     appdir = Path(f"/data/data/{bundle}")
     appdir.mkdir(exist_ok=True)
 
-    print(f"LOG: Mounting filesystem for {bundle}...")
-    
     import tarfile
-    try:
-        async with platform.fopen("hackathon_1.tar.gz", "rb") as archive:
-            print("LOG: Archive opened, extracting...")
-            tar = tarfile.open(fileobj=archive, mode="r:gz")
-            # Remove filter for compatibility
+    async with platform.fopen("hackathon_1.tar.gz", "rb") as archive:
+        with tarfile.open(fileobj=archive, mode="r:gz") as tar:
             tar.extractall(path=appdir.as_posix())
-            tar.close()
-        print("LOG: Extraction complete.")
-    except Exception as e:
-        print(f"LOG ERROR: Extraction failed: {e}")
-
-    print("LOG: Starting Pygbag loader...")
-    platform.run_main(PyConfig, loaderhome=appdir, loadermain=None)
-
-    while embed.counter()<0:
-        await asyncio.sleep(.1)
-
-    main = appdir / "main.py"
-    print(f"LOG: Main path: {main}")
-
+    
+    print("LOG: Filesystem ready")
+    platform.run_main(PyConfig, loaderhome=appdir)
+    
+    # Wait for engine
+    import embed
+    while embed.counter()<0: await asyncio.sleep(.1)
+    
+    entry = appdir / "main.py"
+    
+    # Handle click to start
     if not platform.window.MM.UME:
-        msg = "Ready to start! Click anywhere to play"
-        platform.window.infobox.innerText = msg
-        print(f"LOG: {msg}")
-        while not platform.window.MM.UME:
-            await asyncio.sleep(.1)
-
-    print("LOG: Handing over to engine...")
-    __import__(__name__).__file__ = str(main)
-    await shell.source(main)
+        platform.window.infobox.innerText = "CLICK HERE TO START GAME"
+        platform.window.infobox.style.background = "red"
+        while not platform.window.MM.UME: await asyncio.sleep(.1)
     
     platform.window.infobox.style.display = "none"
-    print("LOG: Done.")
+    await shell.source(entry)
 
-asyncio.run( custom_site() )
+asyncio.run(main())
 
-# BEGIN BLOCK
 # =============================================================================
-# --></script><head><!--
-//=============================================================================
---><script type="application/javascript">
-// END BLOCK
-
-config = {
-    xtermjs : "1" ,
-    _sdl2 : "canvas",
-    user_canvas : 0,
-    user_canvas_managed : 0,
-    gui_divider : 2,
-    ume_block : 1,
-    can_close : 0,
-    archive : "hackathon_1",
-    gui_debug : 2,
-    cdn : "https://pygame-web.github.io/archives/0.9/",
-    autorun : 0,
-    PYBUILD : "3.12",
-    fb_ar   :  1.77,
-    fb_width : "1280",
-    fb_height : "720"
-}
-
-function show_infobox() {
-    infobox.style.display = "block";
-    const w = infobox.offsetWidth;
-    const h = infobox.offsetHeight;
-    const left = (window.innerWidth - w) / 2;
-    const top = (window.innerHeight - h) / 2;
-    infobox.style.left = left + "px";
-    infobox.style.top = top + "px";
-}
-</script>
-    <title>Arena Arcade Suite</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { background-color: #1a1a1a; color: white; font-family: sans-serif; margin: 0; }
-        #infobox {
-            position: fixed;
-            background: #007bff;
-            color: white;
-            padding: 15px 30px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-        canvas.emscripten {
-            width: 100%; height: 100%; border: 0;
-            position: absolute; top: 0; left: 0;
-        }
-    </style>
+# --></script><head>
+<script src="https://pygame-web.github.io/archives/0.9/browserfs.min.js"></script>
+<style>
+    body { background: #000; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+    #infobox { position: absolute; background: #ff0000; color: white; padding: 20px 40px; font-family: sans-serif; font-size: 24px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(255,0,0,0.5); z-index: 100; transition: transform 0.2s; }
+    #infobox:hover { transform: scale(1.1); }
+    canvas { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+</style>
 </head>
-<body onload="show_infobox()">
-    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=1></canvas>
-    <div id="infobox">Initializing Game Engine...</div>
-</body>
-</html>
+<body>
+    <div id="infobox">LOADING ARENA...</div>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex=1></canvas>
+    <script>
+        const config = {
+            archive: "hackathon_1",
+            cdn: "https://pygame-web.github.io/archives/0.9/",
+            fb_width: 1280,
+            fb_height: 720
+        };
+        function show_infobox() { document.getElementById('infobox').style.display = 'block'; }
+    </script>
+</body></html>
