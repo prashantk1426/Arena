@@ -78,27 +78,41 @@
 
 # audio.py
 import pygame
-import numpy as np
+import math
+import array
 
 class AudioManager:
     def __init__(self):
         self.enabled = True
         self.current_track = None
         self.music_playing = False
-        try: self.np = np
-        except ImportError: self.enabled = False
+        self.sample_rate = 22050
 
     def _gen_tone(self, freq, dur, vol=0.3, wave='sine'):
-        if not self.enabled: return None
-        t = self.np.linspace(0, dur, int(22050 * dur), False)
-        w = self.np.sin(2 * self.np.pi * freq * t) if wave == 'sine' else self.np.sign(self.np.sin(2 * self.np.pi * freq * t))
-        fade = self.np.linspace(1, 0, len(w))
-        audio = (w * fade * vol * 32767 * 0.5).astype(self.np.int16)
-        return pygame.sndarray.make_sound(self.np.column_stack((audio, audio)))
+        num_samples = int(self.sample_rate * dur)
+        samples = array.array('h', [0] * (num_samples * 2)) # Stereo
+        
+        for i in range(num_samples):
+            t = i / self.sample_rate
+            val = math.sin(2 * math.pi * freq * t)
+            if wave == 'square':
+                val = 1.0 if val >= 0 else -1.0
+            
+            # Linear Fade out
+            fade = (num_samples - i) / num_samples
+            
+            # 16-bit signed integer conversion
+            sample = int(val * fade * vol * 32767 * 0.5)
+            samples[i*2] = sample     # Left
+            samples[i*2 + 1] = sample # Right
+            
+        return pygame.mixer.Sound(buffer=samples)
 
     def play_sfx(self, freq, dur, vol=0.3):
-        s = self._gen_tone(freq, dur, vol)
-        if s: s.set_volume(vol); s.play()
+        try:
+            s = self._gen_tone(freq, dur, vol)
+            s.play()
+        except: pass
 
     def start_lobby_music(self):
         if self.music_playing: return
@@ -112,22 +126,39 @@ class AudioManager:
         except: pass
 
     def _gen_ambient(self):
-        sr, dur = 22050, 16.0
-        t = self.np.linspace(0, dur, int(sr * dur), False)
-        buf = self.np.zeros(len(t))
-        chords = [(82.41,110,146.83), (73.42,98,130.81), (98,130.81,174.61), (87.31,116.54,155.56)]
-        for i, (f1,f2,f3) in enumerate(chords):
-            s, e = i*int(sr*4), (i+1)*int(sr*4)
-            chunk = t[s:e] - t[s]
-            env = self.np.ones(len(chunk))
-            env[:int(sr*0.8)] = self.np.linspace(0,1,int(sr*0.8))
-            env[-int(sr*0.8):] = self.np.linspace(1,0,int(sr*0.8))
-            buf[s:e] += 0.12*self.np.sin(2*self.np.pi*f1*chunk)*env + 0.08*self.np.sin(2*self.np.pi*f2*chunk)*env + 0.06*self.np.sin(2*self.np.pi*f3*chunk)*env
-        buf = self.np.convolve(buf, self.np.ones(200)/200, mode='same')
-        buf = buf / self.np.max(self.np.abs(buf)) * 0.4
-        return pygame.sndarray.make_sound(self.np.column_stack((buf.astype(self.np.int16), buf.astype(self.np.int16))))
+        # Shorter duration for pure python generation to avoid hang
+        dur = 8.0
+        num_samples = int(self.sample_rate * dur)
+        samples = array.array('h', [0] * (num_samples * 2))
+        
+        chords = [(82.41, 110, 146.83), (73.42, 98, 130.81)]
+        chord_dur = dur / len(chords)
+        
+        for c_idx, (f1, f2, f3) in enumerate(chords):
+            start_s = int(c_idx * chord_dur * self.sample_rate)
+            end_s = int((c_idx + 1) * chord_dur * self.sample_rate)
+            
+            for i in range(start_s, end_s):
+                t = i / self.sample_rate
+                # Envelope
+                rel_i = i - start_s
+                chunk_len = end_s - start_s
+                env = 1.0
+                attack = int(self.sample_rate * 0.5)
+                if rel_i < attack: env = rel_i / attack
+                elif rel_i > chunk_len - attack: env = (chunk_len - rel_i) / attack
+                
+                val = (0.12 * math.sin(2 * math.pi * f1 * t) + 
+                       0.08 * math.sin(2 * math.pi * f2 * t) + 
+                       0.06 * math.sin(2 * math.pi * f3 * t)) * env
+                
+                sample = int(val * 32767 * 0.4)
+                samples[i*2] = sample
+                samples[i*2 + 1] = sample
+                
+        return pygame.mixer.Sound(buffer=samples)
 
     def stop_music(self, fade_ms=1000):
         if self.current_track and self.music_playing:
             self.current_track.fadeout(fade_ms)
-            self.music_playing = False
+            self.music_playing = False
