@@ -16,7 +16,7 @@
 import pygame
 
 # Fullscreen Target Resolution
-SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
+SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720
 FPS = 60
 
 # Professional Color Palette

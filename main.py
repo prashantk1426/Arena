@@ -3,19 +3,20 @@ import pygame
 import sys
 import asyncio
 import config as cfg
-from audio import AudioManager
-from graphics import Background, Particle, LobbyEffect
-from ui import Button, HUD, ModalInput, get_font
-from game_collector import ArenaGame
-from game_dodge import DodgeGame
-from game_reaction import ReactionGame
 from leaderboard import Leaderboard
 
 async def main():
+    print("LOG: Script started")
+    print("LOG: Initializing pygame...")
     pygame.init()
-    pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
     
-    # Robust display initialization with SCALED for web
+    print("LOG: Initializing mixer...")
+    try:
+        pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+    except Exception as e:
+        print(f"Mixer init failed: {e}")
+    
+    print(f"Setting display mode to {cfg.SCREEN_WIDTH}x{cfg.SCREEN_HEIGHT}...")
     try:
         screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.SCALED | pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
     except pygame.error:
@@ -27,6 +28,17 @@ async def main():
     pygame.mouse.set_visible(True)
     clock = pygame.time.Clock()
     
+    print("LOG: Loading UI and Audio modules...")
+    from ui import Button, HUD, ModalInput, get_font
+    from audio import AudioManager
+    from graphics import Background, Particle, LobbyEffect
+    
+    print("LOG: Loading Game modules...")
+    from game_collector import ArenaGame
+    from game_dodge import DodgeGame
+    from game_reaction import ReactionGame
+    
+    print("LOG: Initializing assets...")
     # Robust font loading
     fL = get_font(72, bold=True)
     fM = get_font(44, bold=True)
@@ -39,11 +51,14 @@ async def main():
     lb = Leaderboard()
     particles = []
 
+    print("LOG: Setting up game instances...")
     games = {
         'collector': ArenaGame(audio, hud, particles),
         'dodge': DodgeGame(audio, hud, particles),
         'reaction': ReactionGame(audio, hud, particles)
     }
+    print("LOG: Ready! Entering main loop.")
+    print("Ready! Starting main loop.")
 
     current_game = None
     game_name = ""
