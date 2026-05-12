@@ -15,15 +15,16 @@ async def main():
     pygame.init()
     pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
     
-    # Robust display initialization
+    # Robust display initialization with SCALED for web
     try:
-        screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
+        screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.SCALED | pygame.FULLSCREEN | pygame.HWSURFACE | pygame.DOUBLEBUF)
     except pygame.error:
-        # Fallback to windowed mode if fullscreen fails
-        print("Fullscreen initialization failed. Falling back to windowed mode.")
-        screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
+        # Fallback to windowed SCALED if fullscreen fails
+        print("Fullscreen initialization failed. Falling back to windowed SCALED mode.")
+        screen = pygame.display.set_mode((cfg.SCREEN_WIDTH, cfg.SCREEN_HEIGHT), pygame.SCALED | pygame.HWSURFACE | pygame.DOUBLEBUF)
         
     pygame.display.set_caption("ARENA - Professional Arcade Suite")
+    pygame.mouse.set_visible(True)
     clock = pygame.time.Clock()
     
     # Robust font loading
@@ -124,6 +125,14 @@ async def main():
 
         elif state == 'input_name':
             modal.draw(screen, fL, fM, fS)
+            if modal.update(pos, events):
+                if modal.input_text.strip():
+                    player_name = modal.input_text.strip()
+                    if selected_game_key == 'dodge': start_game()
+                    else:
+                        state = 'input_diff'
+                        modal = ModalInput("SELECT DIFFICULTY:", options=cfg.DIFFICULTIES)
+            
             for ev in events:
                 if ev.type == pygame.KEYDOWN:
                     if ev.key == pygame.K_RETURN and modal.input_text.strip():
@@ -138,6 +147,10 @@ async def main():
 
         elif state == 'input_diff':
             modal.draw(screen, fL, fM, fS)
+            if modal.update(pos, events):
+                selected_difficulty = modal.options[modal.selected_idx]
+                start_game()
+            
             for ev in events:
                 if ev.type == pygame.KEYDOWN:
                     if ev.key == pygame.K_RETURN:
@@ -216,8 +229,10 @@ async def main():
                 screen.blit(s, (cfg.SCREEN_WIDTH//2 - 300, 150 + i*52))
             
             # FIXED: Moved ESC hint DOWN and made it more visible
-            esc_hint = fM.render("Press ESC to go back", True, cfg.ACCENT_GREEN)
+            esc_hint = fM.render("Press ESC or Click to go back", True, cfg.ACCENT_GREEN)
             screen.blit(esc_hint, (cfg.SCREEN_WIDTH//2 - esc_hint.get_width()//2, 730))
+
+            if clicks: go_back()
 
         for p in particles[:]: p.update(dt); p.draw(screen)
         particles[:] = [p for p in particles if p.life > 0]

@@ -253,3 +253,15 @@ class ModalInput:
             hint_y = 400
             
         surf.blit(hint, (surf.get_width()//2 - hint.get_width()//2, hint_y))
+
+    def update(self, pos, events):
+        """Update modal state based on mouse position and clicks."""
+        if self.options:
+            for i, opt in enumerate(self.options):
+                rect = pygame.Rect(cfg.SCREEN_WIDTH//2 - 200, 280 + i*70, 400, 55)
+                if rect.collidepoint(pos):
+                    self.selected_idx = i
+                    if any(e.type == pygame.MOUSEBUTTONDOWN for e in events):
+                        # Return True to signal that an option was selected via click
+                        return True
+        return False

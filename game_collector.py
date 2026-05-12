@@ -184,11 +184,24 @@ class ArenaGame:
             self.time_left = 0; self.running = False
             return self.score, self.lives
 
+        # Movement: Keyboard + Mouse Follow
         spd = 450
-        if keys[pygame.K_w] or keys[pygame.K_UP]: self.player.y -= spd*dt
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]: self.player.y += spd*dt
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]: self.player.x -= spd*dt
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: self.player.x += spd*dt
+        moved = False
+        if keys[pygame.K_w] or keys[pygame.K_UP]: self.player.y -= spd*dt; moved = True
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]: self.player.y += spd*dt; moved = True
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]: self.player.x -= spd*dt; moved = True
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: self.player.x += spd*dt; moved = True
+        
+        # Mouse Follow (if not using keyboard)
+        if not moved:
+            m_pos = pygame.mouse.get_pos()
+            dx = m_pos[0] - self.player.centerx
+            dy = m_pos[1] - self.player.centery
+            dist = math.hypot(dx, dy)
+            if dist > 5:
+                self.player.x += (dx / dist) * spd * dt
+                self.player.y += (dy / dist) * spd * dt
+
         self.player.x = max(50, min(cfg.SCREEN_WIDTH-90, self.player.x))
         self.player.y = max(50, min(cfg.SCREEN_HEIGHT-90, self.player.y))
 

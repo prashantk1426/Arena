@@ -113,9 +113,18 @@ class DodgeGame:
 
     def update(self, dt, keys, clicks=None):
         if not self.running: return self.score, self.lives
+        # Movement: Keyboard + Mouse Follow
         spd = 600
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]: self.player.x -= spd*dt
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: self.player.x += spd*dt
+        moved = False
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]: self.player.x -= spd*dt; moved = True
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: self.player.x += spd*dt; moved = True
+        
+        if not moved:
+            m_x = pygame.mouse.get_pos()[0]
+            dx = m_x - self.player.centerx
+            if abs(dx) > 5:
+                self.player.x += (1 if dx > 0 else -1) * spd * dt
+        
         self.player.x = max(50, min(cfg.SCREEN_WIDTH-110, self.player.x))
 
         self.speed += dt * 8
