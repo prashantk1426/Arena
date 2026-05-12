@@ -55,7 +55,7 @@
 
 ## 📂 Installation & Execution
 1.  Navigate to the **`dist/`** folder.
-2.  Double-click **`ArenaArcade.exe`**.
+2.  Double-click **`main.exe`**.
 3.  **No Python environment or dependencies required.**
 
 ---
